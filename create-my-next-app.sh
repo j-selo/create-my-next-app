@@ -12,7 +12,22 @@ for cmd in gh git npx; do
     fi
 done
 
-# Commnand-line argument for project name
+# Check if user is authenticated with GitHub CLI
+if ! gh auth status &> /dev/null; then
+    echo "You are not authenticated with GitHub CLI. Please run 'gh auth login'"
+    exit 1
+fi
+
+# Ensure the remote is set to use SSH instead of HTTPS
+gh config set git_protocol ssh -h github.com > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "The remote is set to use SSH for GitHub.✅"
+else
+    echo "Error: Failed to set GitHub CLI to use SSH. Please check your GitHub CLI configuration."
+    exit 1
+fi
+
+# Command-line argument for project name
 PROJECT_NAME=$1
 if [ -z "$1" ]; then
     echo "Usage: $0 <project-name>"
@@ -20,7 +35,7 @@ if [ -z "$1" ]; then
 fi
 
 # Create & Clone GitHub Repository
-gh repo create $PROJECT_NAME --public --confirm || { echo "Error: Failed to create GitHub repository."; exit 1; }
+gh repo create $PROJECT_NAME --public --clone || { echo "Error: Failed to create GitHub repository."; exit 1; }
 
 # Change to the project directory
 cd $PROJECT_NAME || { echo "Error: Failed to change directory to $PROJECT_NAME."; exit 1; }
